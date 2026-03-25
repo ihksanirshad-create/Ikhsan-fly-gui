@@ -1,0 +1,77 @@
+-- Ikhsan Fly GUI Script
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = char:WaitForChild("HumanoidRootPart")
+
+-- GUI
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "IkhsanFlyGui"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 120, 0, 50)
+button.Position = UDim2.new(0, 20, 0, 200)
+button.Text = "Fly: OFF"
+button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+button.TextColor3 = Color3.fromRGB(255,255,255)
+button.Parent = screenGui
+
+-- Fly variables
+local flying = false
+local speed = 50
+local bodyGyro, bodyVelocity
+
+function startFly()
+    bodyGyro = Instance.new("BodyGyro")
+    bodyVelocity = Instance.new("BodyVelocity")
+
+    bodyGyro.P = 9e4
+    bodyGyro.Parent = humanoidRootPart
+    bodyGyro.MaxTorque = Vector3.new(9e9, 9e9, 9e9)
+    bodyGyro.CFrame = humanoidRootPart.CFrame
+
+    bodyVelocity.Parent = humanoidRootPart
+    bodyVelocity.Velocity = Vector3.new(0,0,0)
+    bodyVelocity.MaxForce = Vector3.new(9e9,9e9,9e9)
+
+    game:GetService("RunService").RenderStepped:Connect(function()
+        if flying then
+            local cam = workspace.CurrentCamera
+            bodyGyro.CFrame = cam.CFrame
+
+            local moveDir = Vector3.new(0,0,0)
+
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.W) then
+                moveDir = moveDir + cam.CFrame.LookVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.S) then
+                moveDir = moveDir - cam.CFrame.LookVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.A) then
+                moveDir = moveDir - cam.CFrame.RightVector
+            end
+            if game:GetService("UserInputService"):IsKeyDown(Enum.KeyCode.D) then
+                moveDir = moveDir + cam.CFrame.RightVector
+            end
+
+            bodyVelocity.Velocity = moveDir * speed
+        end
+    end)
+end
+
+function stopFly()
+    if bodyGyro then bodyGyro:Destroy() end
+    if bodyVelocity then bodyVelocity:Destroy() end
+end
+
+button.MouseButton1Click:Connect(function()
+    flying = not flying
+    if flying then
+        button.Text = "Fly: ON"
+        startFly()
+    else
+        button.Text = "Fly: OFF"
+        stopFly()
+    end
+end)
