@@ -1,0 +1,70 @@
+-- Fly Script V3 (Simple Smooth Fly)
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local humanoid = char:WaitForChild("Humanoid")
+
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+local flying = false
+local speed = 50
+
+local bodyGyro = Instance.new("BodyGyro")
+local bodyVelocity = Instance.new("BodyVelocity")
+
+bodyGyro.P = 9e4
+bodyGyro.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+
+bodyVelocity.velocity = Vector3.new(0,0,0)
+bodyVelocity.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
+local control = {f=0, b=0, l=0, r=0, u=0, d=0}
+
+-- Input
+UIS.InputBegan:Connect(function(input, processed)
+	if processed then return end
+	
+	if input.KeyCode == Enum.KeyCode.F then
+		flying = not flying
+		
+		if flying then
+			bodyGyro.Parent = hrp
+			bodyVelocity.Parent = hrp
+			humanoid.PlatformStand = true
+		else
+			bodyGyro.Parent = nil
+			bodyVelocity.Parent = nil
+			humanoid.PlatformStand = false
+		end
+	end
+	
+	if input.KeyCode == Enum.KeyCode.W then control.f = 1 end
+	if input.KeyCode == Enum.KeyCode.S then control.b = -1 end
+	if input.KeyCode == Enum.KeyCode.A then control.l = -1 end
+	if input.KeyCode == Enum.KeyCode.D then control.r = 1 end
+	if input.KeyCode == Enum.KeyCode.Space then control.u = 1 end
+	if input.KeyCode == Enum.KeyCode.LeftControl then control.d = -1 end
+end)
+
+UIS.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.W then control.f = 0 end
+	if input.KeyCode == Enum.KeyCode.S then control.b = 0 end
+	if input.KeyCode == Enum.KeyCode.A then control.l = 0 end
+	if input.KeyCode == Enum.KeyCode.D then control.r = 0 end
+	if input.KeyCode == Enum.KeyCode.Space then control.u = 0 end
+	if input.KeyCode == Enum.KeyCode.LeftControl then control.d = 0 end
+end)
+
+-- Fly loop
+RunService.RenderStepped:Connect(function()
+	if flying then
+		local cam = workspace.CurrentCamera
+		local direction = (cam.CFrame.LookVector * (control.f + control.b))
+			+ (cam.CFrame.RightVector * (control.r + control.l))
+			+ Vector3.new(0, control.u + control.d, 0)
+		
+		bodyVelocity.velocity = direction * speed
+		bodyGyro.CFrame = cam.CFrame
+	end
+end)
